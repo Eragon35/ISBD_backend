@@ -9,7 +9,7 @@ GET     /                           controllers.HomeController.index
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
 
-POST    /auth                   controllers.HomeController.jsonpost
+POST    /auth                   controllers.HomeController.auth
 
 GET     /patients/                  controllers.HomeController.getPatientsList(doctorId: Int ?= 0)
 

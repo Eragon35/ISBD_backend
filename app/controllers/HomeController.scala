@@ -20,8 +20,22 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
    * will be called when the application receives a `GET` request with
    * a path of `/`.
    */
-  def index = Action {
+  def index: Action[AnyContent] = Action {
     Ok(views.html.index("Your new application is ready."))
+  }
+
+  case class User(login: String, pass: String)
+  implicit val userReads: Reads[User] =
+  ((JsPath \ "login").read[String] and
+    (JsPath \ "pass").read[String])(User.apply _)
+
+  def auth: Action[AnyContent] = Action { request =>
+    val json = request.body.asJson.get
+    val user = json.as[User]
+    // check if password is right
+    println(user)
+    Ok(Json.toJson(1)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
+    // send user/doctor id
   }
 
 
@@ -42,7 +56,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       Smoker("Arsentii", "Antipin", 0),
       Smoker("Alexander", "Antipin", 8)
     )
-    Ok(Json.toJson(list))
+    Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
 
@@ -72,7 +86,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       )
       val patient: Patient = Patient(smoker, relatives, punishments) // patient(person.firstname, person, lastname, smoker.numberofaccidents)
       println(patientId)
-      Ok(Json.toJson(patient))
+      Ok(Json.toJson(patient)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
     }
   }
 
@@ -89,7 +103,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       val punishment = json.as[Punishment]
       // save punishment to DB punishment
       println(punishment)
-      Ok
+      Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
     }
 
 
@@ -104,7 +118,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     val weighing = json.as[Weighing]
     // save weighing to DB: to weighing
     println(weighing)
-    Ok
+    Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
 
@@ -122,7 +136,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       Relative(2, "Andrey", "Smirnov", "son")) // get from BD: select * from relative R
     // where (R.smokerId = smokerId) and (isFingerCuttingOff = false)
     println(smokerId)
-    Ok(Json.toJson(list))
+    Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
   def cutFinger(personId: Int): Action[AnyContent] = Action { personId =>
@@ -130,7 +144,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     // set isFingerCuttingOff = true
     // where R.personId = personId
     println(personId)
-    Ok
+    Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
   // TODO: think about need of this end-point
@@ -139,9 +153,6 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       Relative(1, "Victor", "Andreev", "husband"),
       Relative(2, "Andrey", "Smirnov", "son")) // get from BD: select * from relative R
     // where (R.smokerId = smokerId)
-    Ok(Json.toJson(list))
+    Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
-
-
-
 }
