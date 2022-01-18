@@ -19,6 +19,8 @@ POST    /punishment                 controllers.HomeController.punishment
 
 POST    /weighing                   controllers.HomeController.addWeighing
 
+POST    /addobservation             controllers.HomeController.addObservation
+
 GET     /relativeswithfinger/       controllers.HomeController.relativesWithFinger(smokerId: Int ?= 0)
 
 GET     /cutfinger/                 controllers.HomeController.cutFinger(personId: Int ?= 0)

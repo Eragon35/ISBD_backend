@@ -20,7 +20,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
    * will be called when the application receives a `GET` request with
    * a path of `/`.
    */
-  def index: Action[AnyContent] = Action {
+  def index(): Action[AnyContent] = Action {
     Ok(views.html.index("Your new application is ready."))
   }
 
@@ -29,7 +29,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
   ((JsPath \ "login").read[String] and
     (JsPath \ "pass").read[String])(User.apply _)
 
-  def auth: Action[AnyContent] = Action { request =>
+  def auth(): Action[AnyContent] = Action { request =>
     val json = request.body.asJson.get
     val user = json.as[User]
     // check if password is right
@@ -123,13 +123,13 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       (JsPath \ "victim").read[Int] and
       (JsPath \ "cost").read[Int])(Punishment.apply _)
 
-    def punishment: Action[AnyContent] = Action { request =>
-      val json = request.body.asJson.get
-      val punishment = json.as[Punishment]
-      // save punishment to DB punishment
-      println(punishment)
-      Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
-    }
+  def punishment(): Action[AnyContent] = Action { request =>
+    val json = request.body.asJson.get
+    val punishment = json.as[Punishment]
+    // save punishment to DB punishment
+    println(punishment)
+    Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
+  }
 
 
   case class Weighing(smokerId: Int, date: String, weight: Float)
@@ -169,6 +169,21 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     // set isFingerCuttingOff = true
     // where R.personId = personId
     println(personId)
+    Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
+  }
+
+  case class smokerObservation(smokerId: Int, start: String, finish: String, hoursPerDay: Int)
+  implicit val smokerObservationReads: Reads[smokerObservation] =
+  ((JsPath \ "smokerId").read[Int] and
+    (JsPath \ "start").read[String] and
+    (JsPath \ "finish").read[String] and
+    (JsPath \ "hoursPerDay").read[Int])(smokerObservation.apply _)
+
+  def addObservation(): Action[AnyContent] = Action { request =>
+    val json = request.body.asJson.get
+    val observation = json.as[smokerObservation]
+    // save observation to DB: to observationschedule
+    println(observation)
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
