@@ -26,3 +26,5 @@ GET     /cutfinger/                 controllers.HomeController.cutFinger(personI
 GET     /relatives/                 controllers.HomeController.getRelatives(smokerId: Int ?= 0)
 
 GET     /punishments/               controllers.HomeController.getPunishments(smokerId: Int ?= 0)
+
+GET     /observation/               controllers.HomeController.getObservationSchedule(smokerId: Int ?= 0)

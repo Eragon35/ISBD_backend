@@ -76,6 +76,13 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     "victimLastName" -> pp.victimLastName
   )
 
+  case class Observation(start: String, finish: String, hoursPerDay: Int)
+  implicit val observationWrites: Writes[Observation] = (o: Observation) => Json.obj(
+    "start" -> o.start,
+    "finish" -> o.finish,
+    "hoursPerDay" -> o.hoursPerDay
+  )
+
   def getSmoker(smokerId: Int):Action[AnyContent] =  Action { _ =>
     val smoker = Smoker(26, "Alexander", "Antipin", 8) // find in smoker by smokerId
     println(smokerId)
@@ -97,6 +104,15 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     )
     println(smokerId)
     Ok(Json.toJson(punishments)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
+  }
+
+  def getObservationSchedule(smokerId: Int): Action[AnyContent] = Action { _ =>
+    val observation: Seq[Observation] = Seq(
+      Observation("12-12-2021", "01-01-2022", 12),
+      Observation("20-08-2000", "20-08-2020", 24)
+    )
+    println(smokerId) // select * from observationschedule O where O.smokerId = smokerId
+    Ok(Json.toJson(observation)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
   // victimId = personId
