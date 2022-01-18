@@ -9,11 +9,11 @@ GET     /                           controllers.HomeController.index
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
 
-POST    /auth                   controllers.HomeController.auth
+POST    /auth                       controllers.HomeController.auth
 
 GET     /patients/                  controllers.HomeController.getPatientsList(doctorId: Int ?= 0)
 
-GET     /patient/                   controllers.HomeController.getPatient(patientId: Int ?= 0)
+GET     /smoker/                    controllers.HomeController.getSmoker(smokerId: Int ?= 0)
 
 POST    /punishment                 controllers.HomeController.punishment
 
@@ -24,3 +24,5 @@ GET     /relativeswithfinger/       controllers.HomeController.relativesWithFing
 GET     /cutfinger/                 controllers.HomeController.cutFinger(personId: Int ?= 0)
 
 GET     /relatives/                 controllers.HomeController.getRelatives(smokerId: Int ?= 0)
+
+GET     /punishments/               controllers.HomeController.getPunishments(smokerId: Int ?= 0)

@@ -39,8 +39,9 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
   }
 
 
-  case class Smoker(firstName: String, lastName: String, numberOfAccidents: Int)
+  case class Smoker(id: Int, firstName: String, lastName: String, numberOfAccidents: Int)
   implicit val smokerWrites: Writes[Smoker] = (smoker: Smoker) => Json.obj(
+    "id" -> smoker.id,
     "firstName" -> smoker.firstName,
     "lastName" -> smoker.lastName,
     "numberOfAccidents" -> smoker.numberOfAccidents
@@ -51,11 +52,12 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
    * names = smokers.map(x => select P.firstName, P.LastName from person P where (P.id = x.personId)
    * list = smokers.map(person => smoker(person.firstname, person, lastname, smoker.numberofaccidents)
    */
-  def getPatientsList(doctorId: Int): Action[AnyContent] = Action { doctorId =>
+  def getPatientsList(doctorId: Int): Action[AnyContent] = Action { _ =>
     val list: Seq[Smoker] = Seq(
-      Smoker("Arsentii", "Antipin", 0),
-      Smoker("Alexander", "Antipin", 8)
+      Smoker(35,"Arsentii", "Antipin", 0),
+      Smoker(26, "Alexander", "Antipin", 8)
     )
+    println(doctorId)
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
@@ -74,20 +76,27 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     "victimLastName" -> pp.victimLastName
   )
 
-  def getPatient(patientId: Int):Action[AnyContent] =  {
-    Action { patientId =>
-      val smoker = Smoker("Alexander", "Antipin", 8) // find in smoker by patientId
-      val relatives: Seq[Relative] = Seq(
-        Relative(1, "Victor", "Andreev", "husband"),
-        Relative(2, "Andrey", "Smirnov", "son")) // find in person by smoker.personId
-      val punishments: Seq[PreviousPunishment] = Seq(
-        PreviousPunishment("broke hand", "Niyaz", "Bayramov"),
-        PreviousPunishment("iznasilovanie", "Alexey", "Panin")
-      )
-      val patient: Patient = Patient(smoker, relatives, punishments) // patient(person.firstname, person, lastname, smoker.numberofaccidents)
-      println(patientId)
-      Ok(Json.toJson(patient)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
-    }
+  def getSmoker(smokerId: Int):Action[AnyContent] =  Action { _ =>
+    val smoker = Smoker(26, "Alexander", "Antipin", 8) // find in smoker by smokerId
+    println(smokerId)
+    Ok(Json.toJson(smoker)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
+  }
+
+  def getRelatives(smokerId: Int): Action[AnyContent] = Action { _ =>
+    val relatives: Seq[Relative] = Seq(
+      Relative(1, "Victor", "Andreev", "husband"),
+      Relative(2, "Andrey", "Smirnov", "son")) // find in person by smoker.personId
+      println(smokerId)
+    Ok(Json.toJson(relatives)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
+  }
+
+  def getPunishments(smokerId: Int): Action[AnyContent] = Action { _ =>
+    val punishments: Seq[PreviousPunishment] = Seq(
+      PreviousPunishment("broke hand", "Niyaz", "Bayramov"),
+      PreviousPunishment("iznasilovanie", "Alexey", "Panin")
+    )
+    println(smokerId)
+    Ok(Json.toJson(punishments)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
   // victimId = personId
@@ -113,7 +122,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       (JsPath \ "date").read[String] and
       (JsPath \ "weight").read[Float])(Weighing.apply _)
 
-  def addWeighing: Action[AnyContent] = Action { request =>
+  def addWeighing(): Action[AnyContent] = Action { request =>
     val json = request.body.asJson.get
     val weighing = json.as[Weighing]
     // save weighing to DB: to weighing
@@ -130,7 +139,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     "relationship" -> relative.relationship
   )
 
-  def relativesWithFinger(smokerId: Int): Action[AnyContent] = Action { smokerId =>
+  def relativesWithFinger(smokerId: Int): Action[AnyContent] = Action { _ =>
     val list: Seq[Relative] = Seq(
       Relative(1, "Victor", "Andreev", "husband"),
       Relative(2, "Andrey", "Smirnov", "son")) // get from BD: select * from relative R
@@ -139,7 +148,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-  def cutFinger(personId: Int): Action[AnyContent] = Action { personId =>
+  def cutFinger(personId: Int): Action[AnyContent] = Action { _ =>
     // update relative R
     // set isFingerCuttingOff = true
     // where R.personId = personId
@@ -147,12 +156,4 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-  // TODO: think about need of this end-point
-  def getRelatives(smokerId: Int): Action[AnyContent] = Action { smokerId =>
-    val list: Seq[Relative] = Seq(
-      Relative(1, "Victor", "Andreev", "husband"),
-      Relative(2, "Andrey", "Smirnov", "son")) // get from BD: select * from relative R
-    // where (R.smokerId = smokerId)
-    Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
-  }
 }
