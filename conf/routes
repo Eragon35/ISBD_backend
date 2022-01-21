@@ -15,11 +15,14 @@ GET     /patients/                  controllers.HomeController.getPatientsList(d
 
 GET     /smoker/                    controllers.HomeController.getSmoker(smokerId: Int ?= 0)
 
+GET     /punishment/               controllers.HomeController.getPunishments(smokerId: Int ?= 0)
 POST    /punishment                 controllers.HomeController.punishment
 
+GET     /weighing                   controllers.HomeController.addWeighing
 POST    /weighing                   controllers.HomeController.addWeighing
 
-POST    /addobservation             controllers.HomeController.addObservation
+GET     /observation/               controllers.HomeController.getObservationSchedule(smokerId: Int ?= 0)
+POST    /observation                controllers.HomeController.addObservation
 
 GET     /relativeswithfinger/       controllers.HomeController.relativesWithFinger(smokerId: Int ?= 0)
 
@@ -27,6 +30,6 @@ GET     /cutfinger/                 controllers.HomeController.cutFinger(personI
 
 GET     /relatives/                 controllers.HomeController.getRelatives(smokerId: Int ?= 0)
 
-GET     /punishments/               controllers.HomeController.getPunishments(smokerId: Int ?= 0)
+GET     /exit                       controllers.HomeController.exit
 
-GET     /observation/               controllers.HomeController.getObservationSchedule(smokerId: Int ?= 0)
+

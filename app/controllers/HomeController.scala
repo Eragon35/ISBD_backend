@@ -1,9 +1,12 @@
 package controllers
 
+import Models.SmokerObservation
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json._
 import play.api.mvc._
+import services.Connection
+import services.Connection.insertObservation
 
 import javax.inject._
 
@@ -133,10 +136,11 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
 
 
   case class Weighing(smokerId: Int, date: String, weight: Float)
-  implicit val weighingReads: Reads[Weighing] =
+  implicit val weighingReads: Reads[Weighing] = {
     ((JsPath \ "smokerId").read[Int] and
       (JsPath \ "date").read[String] and
       (JsPath \ "weight").read[Float])(Weighing.apply _)
+  }
 
   def addWeighing(): Action[AnyContent] = Action { request =>
     val json = request.body.asJson.get
@@ -158,8 +162,8 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
   def relativesWithFinger(smokerId: Int): Action[AnyContent] = Action { _ =>
     val list: Seq[Relative] = Seq(
       Relative(1, "Victor", "Andreev", "husband"),
-      Relative(2, "Andrey", "Smirnov", "son")) // get from BD: select * from relative R
-    // where (R.smokerId = smokerId) and (isFingerCuttingOff = false)
+      Relative(2, "Andrey", "Smirnov", "son"))
+    // call function findRelativeToCutFingerOut(smoker integer)
     println(smokerId)
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
@@ -172,19 +176,24 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-  case class smokerObservation(smokerId: Int, start: String, finish: String, hoursPerDay: Int)
-  implicit val smokerObservationReads: Reads[smokerObservation] =
+//  case class SmokerObservation(smokerId: Int, start: String, finish: String, hoursPerDay: Int)
+  implicit val smokerObservationReads: Reads[SmokerObservation] =
   ((JsPath \ "smokerId").read[Int] and
     (JsPath \ "start").read[String] and
     (JsPath \ "finish").read[String] and
-    (JsPath \ "hoursPerDay").read[Int])(smokerObservation.apply _)
+    (JsPath \ "hoursPerDay").read[Int])(SmokerObservation.apply _)
 
   def addObservation(): Action[AnyContent] = Action { request =>
     val json = request.body.asJson.get
-    val observation = json.as[smokerObservation]
+    val observation = json.as[SmokerObservation]
     // save observation to DB: to observationschedule
-    println(observation)
+    insertObservation(observation)
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
+  }
+
+  def exit(): Action[AnyContent] = Action { _ =>
+    Connection.exit()
+    Ok
   }
 
 }
