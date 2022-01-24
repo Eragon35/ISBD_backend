@@ -1,6 +1,6 @@
 package services
 
-import Models.{BillTable, DoctorTable, ObservationTable, PersonTable, Punishment, PunishmentTable, Relative, RelativeTable, Smoker, SmokerObservation, SmokerTable, Weighing, WeighingTable}
+import Models.{BillTable, DoctorTable, Observation, ObservationTable, PersonTable, PreviousPunishment, Punishment, PunishmentTable, Relative, RelativeTable, Smoker, SmokerObservation, SmokerTable, Weighing, WeighingTable}
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Await
@@ -73,7 +73,7 @@ object Connection {
     println(weighingId)
   }
 
-  def getPatinets(doctorId: Int): Seq[Smoker] = {
+  def selectPatinets(doctorId: Int): Seq[Smoker] = {
     var result = Seq[Smoker]()
     val join = for {
       s <- smokerTable if s.doctorId === doctorId
@@ -151,7 +151,7 @@ object Connection {
     mydb.run(action)
   }
 
-  def getRelativeWithFinger(smokerId: Int): Seq[Relative] = {
+  def selectRelativeWithFinger(smokerId: Int): Seq[Relative] = {
     var result = Seq[Relative]()
     val setup = sql"select * from findrelativetocutfingerout(${smokerId})".as[(Int, String, String, String)]
     val resultFuture = mydb.run(setup).map{ row =>
@@ -165,7 +165,7 @@ object Connection {
     result
   }
 
-  def getRelativesList(smokerId: Int): Seq[Relative] = {
+  def selectRelatives(smokerId: Int): Seq[Relative] = {
     var result = Seq[Relative]()
     val setup = sql"select * from findrelative(${smokerId})".as[(Int, String, String, String)]
     val resultFuture = mydb.run(setup).map{ row =>
@@ -187,6 +187,51 @@ object Connection {
     }
     Await.result(resultFuture, Duration.Inf)
     println("Cost is " + result)
+    result
+  }
+
+  def selectObservations(smokerId: Int): Seq[Observation] = {
+    var result = Seq[Observation]()
+    val query = observationTable.filter(_.smokerId === smokerId)
+    val resultFuture = mydb.run(query.result).map{ row =>
+      row.groupBy(_._1).map{ r =>
+        val observation = r._2
+        observation.map(x => result = result :+ Observation(x._3, x._4, x._5))
+      }
+    }
+    Await.result(resultFuture, Duration.Inf)
+    result
+  }
+
+  def selectPunishment(smokerId: Int): Seq[PreviousPunishment] = {
+    var result = Seq[PreviousPunishment]()
+    val join = for {
+      pun <- punishmentTable if pun.smokerId === smokerId
+      p <- personTable if p.id === pun.victimId
+    } yield (pun.id, pun.punishment, p.firstName, p.lastName)
+    val resultFuture = mydb.run(join.sortBy(_._1).result).map{ row =>
+      row.groupBy(_._1).map{ r =>
+        val prevPunishment = r._2
+        prevPunishment.map(x => result = result :+ PreviousPunishment(x._2, x._3, x._4))
+      }
+    }
+    Await.result(resultFuture, Duration.Inf)
+    result
+  }
+
+  def selectSmoker(smokerId: Int): Smoker = {
+    var result = Smoker(0, "", "", 0)
+    val join = for {
+      s <- smokerTable if s.id === smokerId
+      p <- personTable if p.id === s.personId
+    } yield (p.firstName, p.lastName, s.numberOfAccidents)
+    val resultFuture = mydb.run(join.result).map{ row =>
+      row.groupBy(_._1).map{ r =>
+        val smoker = r._2.head
+        result = Smoker(smokerId, smoker._1, smoker._2, smoker._3)
+      }
+    }
+    Await.result(resultFuture, Duration.Inf)
     result
   }
 

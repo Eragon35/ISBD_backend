@@ -6,7 +6,7 @@ import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json._
 import play.api.mvc._
 import services.Connection
-import services.Connection.{getCost, getPatinets, getRelativeWithFinger, getRelativesList, insertObservation, insertPunushment, insertWeighing, updateRelativeFinger}
+import services.Connection.{getCost, insertObservation, insertPunushment, insertWeighing, selectObservations, selectPatinets, selectPunishment, selectRelativeWithFinger, selectRelatives, selectSmoker, updateRelativeFinger}
 
 import javax.inject._
 
@@ -24,7 +24,6 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
    * a path of `/`.
    */
   def index(): Action[AnyContent] = Action {
-//    init()
     Ok(views.html.index("Your new application is ready."))
   }
 
@@ -86,47 +85,34 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     // send user/doctor id
   }
 
-  /**
-   * select * from smoker S where (S.doctorId = doctorId) -> smokers
-   * names = smokers.map(x => select P.firstName, P.LastName from person P where (P.id = x.personId)
-   * list = smokers.map(person => smoker(person.firstname, person, lastname, smoker.numberofaccidents)
-   */
+
   def getPatientsList(doctorId: Int): Action[AnyContent] = Action { _ =>
-    val list: Seq[Smoker] = getPatinets(doctorId)
+    val list: Seq[Smoker] = selectPatinets(doctorId)
     println("finding " + list.size + " patients for doctor with Id = " + doctorId)
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
 
   def getSmoker(smokerId: Int):Action[AnyContent] =  Action { _ =>
-    val smoker = Smoker(26, "Alexander", "Petushkov", 8) // find in smoker by smokerId
-    println(smokerId)
+    val smoker = selectSmoker(smokerId)
     Ok(Json.toJson(smoker)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
 
   def getRelatives(smokerId: Int): Action[AnyContent] = Action { _ =>
-    val relatives: Seq[Relative] = getRelativesList(smokerId)
+    val relatives: Seq[Relative] = selectRelatives(smokerId)
     Ok(Json.toJson(relatives)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
 
   def getPunishments(smokerId: Int): Action[AnyContent] = Action { _ =>
-    val punishments: Seq[PreviousPunishment] = Seq(
-      PreviousPunishment("broke hand", "Niyaz", "Bayramov"),
-      PreviousPunishment("iznasilovanie", "Alexey", "Panin")
-    )
-    println(smokerId)
+    val punishments: Seq[PreviousPunishment] = selectPunishment(smokerId)
     Ok(Json.toJson(punishments)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
 
   def getObservationSchedule(smokerId: Int): Action[AnyContent] = Action { _ =>
-    val observation: Seq[Observation] = Seq(
-      Observation("12-12-2021", "01-01-2022", 12),
-      Observation("20-08-2000", "20-08-2020", 24)
-    )
-    println(smokerId) // select * from observationschedule O where O.smokerId = smokerId
+    val observation: Seq[Observation] = selectObservations(smokerId)
     Ok(Json.toJson(observation)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
@@ -149,9 +135,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
 
 
   def relativesWithFinger(smokerId: Int): Action[AnyContent] = Action { _ =>
-    val list: Seq[Relative] = getRelativeWithFinger(smokerId)
-    // call function findRelativeToCutFingerOut(smoker integer)
-//    println(smokerId)
+    val list: Seq[Relative] = selectRelativeWithFinger(smokerId)
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
@@ -170,7 +154,8 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-  def getTreatmentCost(smokerId: Int) = Action {_ =>
+
+  def getTreatmentCost(smokerId: Int): Action[AnyContent] = Action { _ =>
     val cost: Int = getCost(smokerId)
     Ok(Json.toJson(cost)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
