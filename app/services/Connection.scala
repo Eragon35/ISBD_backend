@@ -1,6 +1,6 @@
 package services
 
-import Models.{BillTable, DoctorTable, ObservationTable, PersonTable, Punishment, PunishmentTable, RelativeTable, Smoker, SmokerObservation, SmokerTable, Weighing, WeighingTable}
+import Models.{BillTable, DoctorTable, ObservationTable, PersonTable, Punishment, PunishmentTable, Relative, RelativeTable, Smoker, SmokerObservation, SmokerTable, Weighing, WeighingTable}
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Await
@@ -149,6 +149,45 @@ object Connection {
     val update = relativeTable.filter(_.personId === personId).map(_.isFingerCuttingOff).update(false)
     val action = DBIO.seq(update)
     mydb.run(action)
+  }
+
+  def getRelativeWithFinger(smokerId: Int): Seq[Relative] = {
+    var result = Seq[Relative]()
+    val setup = sql"select * from findrelativetocutfingerout(${smokerId})".as[(Int, String, String, String)]
+    val resultFuture = mydb.run(setup).map{ row =>
+      row.groupBy(_._1).map{ r =>
+        val relatives = r._2
+        relatives.map(x => result = result :+ Relative(x._1, x._2, x._3, x._4))
+      }
+    }
+    Await.result(resultFuture, Duration.Inf)
+    println("Size is " + result.size)
+    result
+  }
+
+  def getRelativesList(smokerId: Int): Seq[Relative] = {
+    var result = Seq[Relative]()
+    val setup = sql"select * from findrelative(${smokerId})".as[(Int, String, String, String)]
+    val resultFuture = mydb.run(setup).map{ row =>
+      row.groupBy(_._1).map{ r =>
+        val relatives = r._2
+        relatives.map(x => result = result :+ Relative(x._1, x._2, x._3, x._4))
+      }
+    }
+    Await.result(resultFuture, Duration.Inf)
+    println("Size is " + result.size)
+    result
+  }
+
+  def getCost(smokerId: Int): Int = {
+    var result = -1
+    val setup = sql"select * from findrelative(${smokerId})".as[Int]
+    val resultFuture = mydb.run(setup).map{ row =>
+      result = row(0)
+    }
+    Await.result(resultFuture, Duration.Inf)
+    println("Cost is " + result)
+    result
   }
 
   def exit(): Unit = mydb.close

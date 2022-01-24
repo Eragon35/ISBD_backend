@@ -30,6 +30,8 @@ GET     /cutfinger/                 controllers.HomeController.cutFinger(personI
 
 GET     /relatives/                 controllers.HomeController.getRelatives(smokerId: Int ?= 0)
 
+GET     /cost/                 controllers.HomeController.getTreatmentCost(smokerId: Int ?= 0)
+
 GET     /exit                       controllers.HomeController.exit
 
 

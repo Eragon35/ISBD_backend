@@ -6,7 +6,7 @@ import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json._
 import play.api.mvc._
 import services.Connection
-import services.Connection.{getPatinets, insertObservation, insertPunushment, insertWeighing, updateRelativeFinger}
+import services.Connection.{getCost, getPatinets, getRelativeWithFinger, getRelativesList, insertObservation, insertPunushment, insertWeighing, updateRelativeFinger}
 
 import javax.inject._
 
@@ -93,11 +93,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
    */
   def getPatientsList(doctorId: Int): Action[AnyContent] = Action { _ =>
     val list: Seq[Smoker] = getPatinets(doctorId)
-//      Seq(
-//      Smoker(35,"Arsentii", "Antipin", 0),
-//      Smoker(26, "Alexander", "Petushkov", 8)
-//    )
-    println("finding patients for doctor with Id = " + doctorId)
+    println("finding " + list.size + " patients for doctor with Id = " + doctorId)
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
@@ -110,10 +106,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
 
 
   def getRelatives(smokerId: Int): Action[AnyContent] = Action { _ =>
-    val relatives: Seq[Relative] = Seq(
-      Relative(1, "Victor", "Andreev", "husband"),
-      Relative(2, "Andrey", "Smirnov", "son")) // find in person by smoker.personId
-      println(smokerId)
+    val relatives: Seq[Relative] = getRelativesList(smokerId)
     Ok(Json.toJson(relatives)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
@@ -156,11 +149,9 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
 
 
   def relativesWithFinger(smokerId: Int): Action[AnyContent] = Action { _ =>
-    val list: Seq[Relative] = Seq(
-      Relative(1, "Victor", "Andreev", "husband"),
-      Relative(2, "Andrey", "Smirnov", "son"))
+    val list: Seq[Relative] = getRelativeWithFinger(smokerId)
     // call function findRelativeToCutFingerOut(smoker integer)
-    println(smokerId)
+//    println(smokerId)
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
@@ -177,6 +168,11 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     val observation = json.as[SmokerObservation]
     insertObservation(observation)
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
+  }
+
+  def getTreatmentCost(smokerId: Int) = Action {_ =>
+    val cost: Int = getCost(smokerId)
+    Ok(Json.toJson(cost)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
 
