@@ -1,12 +1,12 @@
 package controllers
 
-import Models.SmokerObservation
+import Models.{Observation, PreviousPunishment, Punishment, Relative, Smoker, SmokerObservation, Weighing}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json._
 import play.api.mvc._
 import services.Connection
-import services.Connection.insertObservation
+import services.Connection.{getPatinets, insertObservation, insertPunushment, insertWeighing, updateRelativeFinger}
 
 import javax.inject._
 
@@ -24,6 +24,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
    * a path of `/`.
    */
   def index(): Action[AnyContent] = Action {
+//    init()
     Ok(views.html.index("Your new application is ready."))
   }
 
@@ -31,6 +32,50 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
   implicit val userReads: Reads[User] =
   ((JsPath \ "login").read[String] and
     (JsPath \ "pass").read[String])(User.apply _)
+  implicit val smokerWrites: Writes[Smoker] = (smoker: Smoker) => Json.obj(
+    "id" -> smoker.id,
+    "firstName" -> smoker.firstName,
+    "lastName" -> smoker.lastName,
+    "numberOfAccidents" -> smoker.numberOfAccidents
+  )
+  implicit val previousPunishmentWrites: Writes[PreviousPunishment] = (pp: PreviousPunishment) => Json.obj(
+    "punishment" -> pp.punishment,
+    "victimFirstName" -> pp.victimFirstName,
+    "victimLastName" -> pp.victimLastName
+  )
+  implicit val observationWrites: Writes[Observation] = (o: Observation) => Json.obj(
+    "start" -> o.start,
+    "finish" -> o.finish,
+    "hoursPerDay" -> o.hoursPerDay
+  )
+  implicit val punishmentReads: Reads[Punishment] =
+    ((JsPath \ "punishment").read[String] and
+      (JsPath \ "smokerId").read[Int] and
+      (JsPath \ "victim").read[Int] and
+      (JsPath \ "cost").read[Int])(Punishment.apply _)
+  implicit val weighingReads: Reads[Weighing] = {
+    ((JsPath \ "smokerId").read[Int] and
+      (JsPath \ "date").read[String] and
+      (JsPath \ "weight").read[Int])(Weighing.apply _)
+  }
+  implicit val relativeWrites: Writes[Relative] = (relative: Relative) => Json.obj(
+    "personId" -> relative.personId,
+    "firstName" -> relative.firstName,
+    "lastName" -> relative.lastName,
+    "relationship" -> relative.relationship
+  )
+  implicit val smokerObservationReads: Reads[SmokerObservation] =
+    ((JsPath \ "smokerId").read[Int] and
+      (JsPath \ "start").read[String] and
+      (JsPath \ "finish").read[String] and
+      (JsPath \ "hoursPerDay").read[Int])(SmokerObservation.apply _)
+
+  //  case class Patient(smoker: Smoker, relatives: Seq[Relative], punishments: Seq[PreviousPunishment])
+  //  implicit val patientWrites: Writes[Patient] = (patient: Patient) => Json.obj(
+  //    "smoker" -> patient.smoker,
+  //    "relatives" -> patient.relatives,
+  //    "punishments" -> patient.punishments
+  //  )
 
   def auth(): Action[AnyContent] = Action { request =>
     val json = request.body.asJson.get
@@ -41,56 +86,28 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     // send user/doctor id
   }
 
-
-  case class Smoker(id: Int, firstName: String, lastName: String, numberOfAccidents: Int)
-  implicit val smokerWrites: Writes[Smoker] = (smoker: Smoker) => Json.obj(
-    "id" -> smoker.id,
-    "firstName" -> smoker.firstName,
-    "lastName" -> smoker.lastName,
-    "numberOfAccidents" -> smoker.numberOfAccidents
-  )
-
   /**
    * select * from smoker S where (S.doctorId = doctorId) -> smokers
    * names = smokers.map(x => select P.firstName, P.LastName from person P where (P.id = x.personId)
    * list = smokers.map(person => smoker(person.firstname, person, lastname, smoker.numberofaccidents)
    */
   def getPatientsList(doctorId: Int): Action[AnyContent] = Action { _ =>
-    val list: Seq[Smoker] = Seq(
-      Smoker(35,"Arsentii", "Antipin", 0),
-      Smoker(26, "Alexander", "Antipin", 8)
-    )
-    println(doctorId)
+    val list: Seq[Smoker] = getPatinets(doctorId)
+//      Seq(
+//      Smoker(35,"Arsentii", "Antipin", 0),
+//      Smoker(26, "Alexander", "Petushkov", 8)
+//    )
+    println("finding patients for doctor with Id = " + doctorId)
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
 
-  case class Patient(smoker: Smoker, relatives: Seq[Relative], punishments: Seq[PreviousPunishment])
-  implicit val patientWrites: Writes[Patient] = (patient: Patient) => Json.obj(
-    "smoker" -> patient.smoker,
-    "relatives" -> patient.relatives,
-    "punishments" -> patient.punishments
-  )
-
-  case class PreviousPunishment(punishment: String, victimFirstName: String, victimLastName: String)
-  implicit val previousPunishmentWrites: Writes[PreviousPunishment] = (pp: PreviousPunishment) => Json.obj(
-    "punishment" -> pp.punishment,
-    "victimFirstName" -> pp.victimFirstName,
-    "victimLastName" -> pp.victimLastName
-  )
-
-  case class Observation(start: String, finish: String, hoursPerDay: Int)
-  implicit val observationWrites: Writes[Observation] = (o: Observation) => Json.obj(
-    "start" -> o.start,
-    "finish" -> o.finish,
-    "hoursPerDay" -> o.hoursPerDay
-  )
-
   def getSmoker(smokerId: Int):Action[AnyContent] =  Action { _ =>
-    val smoker = Smoker(26, "Alexander", "Antipin", 8) // find in smoker by smokerId
+    val smoker = Smoker(26, "Alexander", "Petushkov", 8) // find in smoker by smokerId
     println(smokerId)
     Ok(Json.toJson(smoker)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
+
 
   def getRelatives(smokerId: Int): Action[AnyContent] = Action { _ =>
     val relatives: Seq[Relative] = Seq(
@@ -99,6 +116,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       println(smokerId)
     Ok(Json.toJson(relatives)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
+
 
   def getPunishments(smokerId: Int): Action[AnyContent] = Action { _ =>
     val punishments: Seq[PreviousPunishment] = Seq(
@@ -109,6 +127,7 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     Ok(Json.toJson(punishments)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
+
   def getObservationSchedule(smokerId: Int): Action[AnyContent] = Action { _ =>
     val observation: Seq[Observation] = Seq(
       Observation("12-12-2021", "01-01-2022", 12),
@@ -118,46 +137,23 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     Ok(Json.toJson(observation)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-  // victimId = personId
-  case class Punishment(punishment: String, smokerId: Int, victimId: Int, cost: Int)
-  implicit val punishmentReads: Reads[Punishment] =
-    ((JsPath \ "punishment").read[String] and
-      (JsPath \ "smokerId").read[Int] and
-      (JsPath \ "victim").read[Int] and
-      (JsPath \ "cost").read[Int])(Punishment.apply _)
 
-  def punishment(): Action[AnyContent] = Action { request =>
+  def addPunishment(): Action[AnyContent] = Action { request =>
     val json = request.body.asJson.get
     val punishment = json.as[Punishment]
-    // save punishment to DB punishment
-    println(punishment)
+    insertPunushment(punishment)
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-
-  case class Weighing(smokerId: Int, date: String, weight: Float)
-  implicit val weighingReads: Reads[Weighing] = {
-    ((JsPath \ "smokerId").read[Int] and
-      (JsPath \ "date").read[String] and
-      (JsPath \ "weight").read[Float])(Weighing.apply _)
-  }
 
   def addWeighing(): Action[AnyContent] = Action { request =>
     val json = request.body.asJson.get
     val weighing = json.as[Weighing]
-    // save weighing to DB: to weighing
+    insertWeighing(weighing)
     println(weighing)
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-
-  case class Relative(personId: Int, firstName: String, lastName: String, relationship: String)
-  implicit val relativeWrites: Writes[Relative] = (relative: Relative) => Json.obj(
-    "personId" -> relative.personId,
-    "firstName" -> relative.firstName,
-    "lastName" -> relative.lastName,
-    "relationship" -> relative.relationship
-  )
 
   def relativesWithFinger(smokerId: Int): Action[AnyContent] = Action { _ =>
     val list: Seq[Relative] = Seq(
@@ -168,31 +164,24 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
+
   def cutFinger(personId: Int): Action[AnyContent] = Action { _ =>
-    // update relative R
-    // set isFingerCuttingOff = true
-    // where R.personId = personId
-    println(personId)
+    updateRelativeFinger(personId)
+//    println(personId)
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-//  case class SmokerObservation(smokerId: Int, start: String, finish: String, hoursPerDay: Int)
-  implicit val smokerObservationReads: Reads[SmokerObservation] =
-  ((JsPath \ "smokerId").read[Int] and
-    (JsPath \ "start").read[String] and
-    (JsPath \ "finish").read[String] and
-    (JsPath \ "hoursPerDay").read[Int])(SmokerObservation.apply _)
 
   def addObservation(): Action[AnyContent] = Action { request =>
     val json = request.body.asJson.get
     val observation = json.as[SmokerObservation]
-    // save observation to DB: to observationschedule
     insertObservation(observation)
     Ok.withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
+
   def exit(): Action[AnyContent] = Action { _ =>
-    Connection.exit()
+    Connection.check()
     Ok
   }
 

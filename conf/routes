@@ -16,7 +16,7 @@ GET     /patients/                  controllers.HomeController.getPatientsList(d
 GET     /smoker/                    controllers.HomeController.getSmoker(smokerId: Int ?= 0)
 
 GET     /punishment/               controllers.HomeController.getPunishments(smokerId: Int ?= 0)
-POST    /punishment                 controllers.HomeController.punishment
+POST    /punishment                 controllers.HomeController.addPunishment
 
 GET     /weighing                   controllers.HomeController.addWeighing
 POST    /weighing                   controllers.HomeController.addWeighing
