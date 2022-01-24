@@ -3,10 +3,12 @@ package Models
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
 
-class WeighingTable(tag:Tag) extends Table[(Int, Int, java.sql.Date, Boolean, Int)](tag, "punishment") {
+case class Weighing(smokerId: Int, date: String, weight: Int)
+
+class WeighingTable(tag:Tag) extends Table[(Int, Int, String, Boolean, Int)](tag, "punishment") {
   def id = column[Int]("id")
   def smokerId = column[Int]("smokerid")
-  def date = column[java.sql.Date]("date")
+  def date = column[String]("date")
   def isBigger = column[Boolean]("isbigger")
   def weight = column[Int]("weight")
 

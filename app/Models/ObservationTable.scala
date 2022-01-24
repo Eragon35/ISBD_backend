@@ -1,12 +1,10 @@
 package Models
 
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.JsPath
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
-import play.api.libs.json._
 
-
+case class SmokerObservation(smokerId: Int, start: String, finish: String, hoursPerDay: Int)
+case class Observation(start: String, finish: String, hoursPerDay: Int)
 
 class ObservationTable(tag:Tag) extends Table[(Int, Int, String, String, Int)](tag, "observationschedule") {
   def id = column[Int]("id", O.PrimaryKey)
@@ -18,4 +16,3 @@ class ObservationTable(tag:Tag) extends Table[(Int, Int, String, String, Int)](t
   override def * = (id, smokerId, start, finish, hoursPerDay)
 }
 
-case class SmokerObservation(smokerId: Int, start: String, finish: String, hoursPerDay: Int)
