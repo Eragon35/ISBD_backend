@@ -1,12 +1,12 @@
 package controllers
 
-import Models.{Observation, PreviousPunishment, Punishment, Relative, Smoker, SmokerObservation, Weighing}
+import Models.{Observation, PreviousPunishment, Punishment, Relative, Smoker, SmokerObservation, SmokerWeighing, Weighing}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.Format.GenericFormat
 import play.api.libs.json._
 import play.api.mvc._
 import services.Connection
-import services.Connection.{getCost, insertObservation, insertPunushment, insertWeighing, selectObservations, selectPatinets, selectPunishment, selectRelativeWithFinger, selectRelatives, selectSmoker, updateRelativeFinger}
+import services.Connection.{getCost, insertObservation, insertPunushment, insertWeighing, selectObservations, selectPatinets, selectPunishment, selectRelativeWithFinger, selectRelatives, selectSmoker, selectWeighing, updateRelativeFinger}
 
 import javax.inject._
 
@@ -68,6 +68,10 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
       (JsPath \ "start").read[String] and
       (JsPath \ "finish").read[String] and
       (JsPath \ "hoursPerDay").read[Int])(SmokerObservation.apply _)
+  implicit val smokerWeighingWrites: Writes[SmokerWeighing] = (sw: SmokerWeighing) => Json.obj(
+    "date" -> sw.date,
+    "weight" -> sw.weight
+  )
 
   //  case class Patient(smoker: Smoker, relatives: Seq[Relative], punishments: Seq[PreviousPunishment])
   //  implicit val patientWrites: Writes[Patient] = (patient: Patient) => Json.obj(
@@ -160,10 +164,8 @@ class HomeController @Inject()(cc: ControllerComponents) extends AbstractControl
     Ok(Json.toJson(cost)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
 
-
-  def exit(): Action[AnyContent] = Action { _ =>
-    Connection.check()
-    Ok
+  def getWeighing(smokerId: Int): Action[AnyContent] = Action { _ =>
+    val list: Seq[SmokerWeighing] = selectWeighing(smokerId)
+    Ok(Json.toJson(list)).withHeaders("Access-Control-Allow-Origin" -> "http://localhost:3000")
   }
-
 }

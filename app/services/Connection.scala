@@ -1,6 +1,6 @@
 package services
 
-import Models.{BillTable, DoctorTable, Observation, ObservationTable, PersonTable, PreviousPunishment, Punishment, PunishmentTable, Relative, RelativeTable, Smoker, SmokerObservation, SmokerTable, Weighing, WeighingTable}
+import Models.{BillTable, DoctorTable, Observation, ObservationTable, PersonTable, PreviousPunishment, Punishment, PunishmentTable, Relative, RelativeTable, Smoker, SmokerObservation, SmokerTable, SmokerWeighing, Weighing, WeighingTable}
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Await
@@ -37,7 +37,6 @@ object Connection {
   var weighingId = 0
   def weighingID(id: Int): Unit = weighingId = id
 
-  // todo: create function to read all IDs
 
   val mydb = Database.forConfig("mydb")
   /**
@@ -62,16 +61,6 @@ object Connection {
   println("Init was made")
 
 
-  def check (): Unit = {
-    println(personId)
-    println(billId)
-    println(doctorId)
-    println(observationId)
-    println(punishmentId)
-    println(relativeId)
-    println(smokerId)
-    println(weighingId)
-  }
 
   def selectPatinets(doctorId: Int): Seq[Smoker] = {
     var result = Seq[Smoker]()
@@ -153,7 +142,7 @@ object Connection {
 
   def selectRelativeWithFinger(smokerId: Int): Seq[Relative] = {
     var result = Seq[Relative]()
-    val setup = sql"select * from findrelativetocutfingerout(${smokerId})".as[(Int, String, String, String)]
+    val setup = sql"select * from findrelativetocutfingerout($smokerId)".as[(Int, String, String, String)]
     val resultFuture = mydb.run(setup).map{ row =>
       row.groupBy(_._1).map{ r =>
         val relatives = r._2
@@ -167,7 +156,7 @@ object Connection {
 
   def selectRelatives(smokerId: Int): Seq[Relative] = {
     var result = Seq[Relative]()
-    val setup = sql"select * from findrelative(${smokerId})".as[(Int, String, String, String)]
+    val setup = sql"select * from findrelative($smokerId)".as[(Int, String, String, String)]
     val resultFuture = mydb.run(setup).map{ row =>
       row.groupBy(_._1).map{ r =>
         val relatives = r._2
@@ -181,7 +170,7 @@ object Connection {
 
   def getCost(smokerId: Int): Int = {
     var result = -1
-    val setup = sql"select * from findrelative(${smokerId})".as[Int]
+    val setup = sql"select * from findrelative($smokerId)".as[Int]
     val resultFuture = mydb.run(setup).map{ row =>
       result = row(0)
     }
@@ -235,6 +224,16 @@ object Connection {
     result
   }
 
-  def exit(): Unit = mydb.close
-
+  def selectWeighing(smokerId: Int): Seq[SmokerWeighing] = {
+    var result = Seq[SmokerWeighing]()
+    val query = weighingTable.filter(_.smokerId === smokerId)
+    val resultFuture = mydb.run(query.result).map{ row =>
+      row.groupBy(_._1).map{ r =>
+        val observation = r._2
+        observation.map(x => result = result :+ SmokerWeighing(x._3, x._5))
+      }
+    }
+    Await.result(resultFuture, Duration.Inf)
+    result
+  }
 }
