@@ -9,7 +9,7 @@ case class PreviousPunishment(punishment: String, victimFirstName: String, victi
 class PunishmentTable(tag:Tag) extends Table[(Int, Int, String, Int, Int)](tag, "punishment") {
   def id = column[Int]("id")
   def smokerId = column[Int]("smokerid")
-  def punishment = column[String]("punishment")
+  def punishment = column[String]("type")
   def victimId = column[Int]("victimid")
   def cost = column[Int]("cost")
 
